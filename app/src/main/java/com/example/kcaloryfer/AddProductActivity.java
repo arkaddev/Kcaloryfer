@@ -40,13 +40,13 @@ public class AddProductActivity extends AppCompatActivity {
 
         for (Product p : products) {
 
-            TextView row = new TextView(this);
+            TextView tv = new TextView(this);
 
-            row.setText(p.name + " | " + p.kcal + " kcal");
-            row.setTextSize(18);
-            row.setPadding(20, 20, 20, 20);
+            tv.setText(p.name + " | " + p.kcal + " kcal");
+            tv.setTextSize(18);
+            tv.setPadding(20, 20, 20, 20);
 
-            row.setOnClickListener(v -> {
+            tv.setOnClickListener(v -> {
 
                 ConsumedProduct c = new ConsumedProduct();
 
@@ -64,14 +64,12 @@ public class AddProductActivity extends AppCompatActivity {
 
                 db.consumedProductDao().insert(c);
 
-                Toast.makeText(
-                        this,
+                Toast.makeText(this,
                         "Dodano: " + p.name,
-                        Toast.LENGTH_SHORT
-                ).show();
+                        Toast.LENGTH_SHORT).show();
             });
 
-            container.addView(row);
+            container.addView(tv);
         }
     }
 }
