@@ -7,21 +7,18 @@
     android:gravity="center"
     android:padding="24dp">
 
-    <TextView
-        android:id="@+id/postureCounterText"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Today: 0"
-        android:textSize="28sp"
-        android:layout_marginBottom="24dp"
-        android:textStyle="bold"/>
 
     <Button
-        android:id="@+id/addPostureButton"
+        android:id="@+id/addProductButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Dodaj posture"
-        android:paddingLeft="24dp"
-        android:paddingRight="24dp"/>
+        android:text="Dodaj produkt"
+        android:layout_marginBottom="12dp"/>
+
+    <Button
+        android:id="@+id/settingsButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Ustawienia"/>
 
 </LinearLayout>
