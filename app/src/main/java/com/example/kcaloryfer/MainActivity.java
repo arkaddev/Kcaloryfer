@@ -2,6 +2,7 @@ package com.example.kcaloryfer;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.Button;
 import android.widget.TextView;
 
@@ -19,7 +20,6 @@ public class MainActivity extends AppCompatActivity {
 
     private Button settingsButton;
     private Button addProductButton;
-
     private TextView summaryText;
 
     private AppDatabase db;
@@ -36,7 +36,7 @@ public class MainActivity extends AppCompatActivity {
         db = AppDatabase.getInstance(this);
 
         settingsButton.setOnClickListener(v ->
-                startActivity(new Intent(this, SettingsActivity.class)));
+                startActivity(new Intent(this, ProductsActivity.class)));
 
         addProductButton.setOnClickListener(v ->
                 startActivity(new Intent(this, AddProductActivity.class)));
@@ -52,11 +52,15 @@ public class MainActivity extends AppCompatActivity {
 
         String today = new SimpleDateFormat(
                 "yyyy-MM-dd",
-                Locale.getDefault()
+                Locale.US
         ).format(new Date());
+
+        Log.d("QUERY_DATE", today);
 
         List<ConsumedProduct> list =
                 db.consumedProductDao().getByDate(today);
+
+        Log.d("DB_SIZE", "size = " + list.size());
 
         double kcal = 0;
         double protein = 0;

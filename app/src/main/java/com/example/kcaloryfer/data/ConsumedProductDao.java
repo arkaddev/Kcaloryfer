@@ -12,9 +12,12 @@ public interface ConsumedProductDao {
     @Insert
     void insert(ConsumedProduct product);
 
-    @Query("SELECT * FROM ConsumedProduct WHERE date = :date")
-    List<ConsumedProduct> getByDate(String date);
+    @Query("SELECT * FROM ConsumedProduct ORDER BY id DESC")
+    List<ConsumedProduct> getAll();
 
     @Query("DELETE FROM ConsumedProduct WHERE id = :id")
     void deleteById(int id);
+
+    @Query("SELECT * FROM ConsumedProduct WHERE date = :date")
+    List<ConsumedProduct> getByDate(String date);
 }
