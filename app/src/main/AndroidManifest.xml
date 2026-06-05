@@ -21,7 +21,7 @@
 
         <!-- ADD PRODUCT -->
         <activity
-            android:name=".AddProductActivity"
+            android:name=".MealsActivity"
             android:exported="false" />
 
         <!-- MAIN -->

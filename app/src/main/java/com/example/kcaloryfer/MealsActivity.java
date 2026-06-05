@@ -13,7 +13,7 @@ import com.example.kcaloryfer.data.*;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
-public class AddProductActivity extends AppCompatActivity {
+public class MealsActivity extends AppCompatActivity {
 
     private AppDatabase db;
 
@@ -29,7 +29,7 @@ public class AddProductActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_add_product);
+        setContentView(R.layout.activity_meals);
 
         db = Room.databaseBuilder(
                         getApplicationContext(),

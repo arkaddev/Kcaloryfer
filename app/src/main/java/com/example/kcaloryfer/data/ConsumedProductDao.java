@@ -20,4 +20,8 @@ public interface ConsumedProductDao {
 
     @Query("SELECT * FROM ConsumedProduct WHERE date = :date")
     List<ConsumedProduct> getByDate(String date);
+
+    @Query("SELECT * FROM ConsumedProduct WHERE date BETWEEN :startDate AND :endDate")
+    List<ConsumedProduct> getBetweenDates(String startDate, String endDate);
+
 }
