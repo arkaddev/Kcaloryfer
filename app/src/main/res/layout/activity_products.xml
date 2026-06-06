@@ -17,6 +17,20 @@
             android:text="Nowy produkt"
             android:layout_marginBottom="16dp"/>
 
+        <Button
+            android:id="@+id/exportButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Eksport JSON"
+            android:layout_marginBottom="8dp"/>
+
+        <Button
+            android:id="@+id/importButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Import JSON"
+            android:layout_marginBottom="16dp"/>
+
         <!-- 🔥 LISTA PRODUKTÓW -->
         <LinearLayout
             android:id="@+id/productsContainer"

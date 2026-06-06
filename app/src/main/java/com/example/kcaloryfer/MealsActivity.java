@@ -10,8 +10,18 @@ import android.widget.*;
 
 import com.example.kcaloryfer.data.*;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import java.io.FileWriter;
 import java.text.SimpleDateFormat;
 import java.util.*;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.util.List;
 
 public class MealsActivity extends AppCompatActivity {
 
@@ -44,6 +54,12 @@ public class MealsActivity extends AppCompatActivity {
         selectedInfo = findViewById(R.id.selectedInfo);
         addButton = findViewById(R.id.addButton);
         consumedContainer = findViewById(R.id.consumedContainer);
+
+        Button exportMealsButton = findViewById(R.id.exportConsumedButton);
+        Button importMealsButton = findViewById(R.id.importConsumedButton);
+
+        exportMealsButton.setOnClickListener(v -> exportMeals());
+        importMealsButton.setOnClickListener(v -> importMeals());
 
         loadProducts();
         loadConsumed();
@@ -193,5 +209,102 @@ public class MealsActivity extends AppCompatActivity {
 
         b.setNegativeButton("Anuluj", null);
         b.show();
+    }
+
+    private void exportMeals() {
+
+        try {
+
+            JSONArray array = new JSONArray();
+
+            List<ConsumedProduct> meals = db.consumedProductDao().getAll();
+
+            for (ConsumedProduct m : meals) {
+
+                JSONObject obj = new JSONObject();
+
+                obj.put("name", m.name);
+                obj.put("grams", m.grams);
+                obj.put("protein", m.protein);
+                obj.put("carbs", m.carbs);
+                obj.put("fat", m.fat);
+                obj.put("kcal", m.kcal);
+                obj.put("date", m.date); // jeśli masz datę
+
+                array.put(obj);
+            }
+
+            File file = new File(getFilesDir(), "meals_backup.json");
+
+            FileWriter writer = new FileWriter(file);
+            writer.write(array.toString(2));
+            writer.close();
+
+            Toast.makeText(this,
+                    "Eksport OK:\n" + file.getAbsolutePath(),
+                    Toast.LENGTH_LONG).show();
+
+        } catch (Exception e) {
+
+            Toast.makeText(this,
+                    "Błąd export: " + e.getMessage(),
+                    Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private void importMeals() {
+
+        try {
+
+            File file = new File(getFilesDir(), "meals_backup.json");
+
+            BufferedReader br =
+                    new BufferedReader(new FileReader(file));
+
+            StringBuilder json = new StringBuilder();
+            String line;
+
+            while ((line = br.readLine()) != null) {
+                json.append(line);
+            }
+
+            br.close();
+
+            JSONArray array = new JSONArray(json.toString());
+
+            db.consumedProductDao().deleteAll();
+
+            for (int i = 0; i < array.length(); i++) {
+
+                JSONObject obj = array.getJSONObject(i);
+
+                ConsumedProduct m = new ConsumedProduct();
+
+                m.name = obj.getString("name");
+                m.grams = obj.getDouble("grams");
+                m.protein = obj.getDouble("protein");
+                m.carbs = obj.getDouble("carbs");
+                m.fat = obj.getDouble("fat");
+                m.kcal = obj.getDouble("kcal");
+
+                if (obj.has("date")) {
+                    m.date = obj.getString("date");
+                }
+
+                db.consumedProductDao().insert(m);
+            }
+
+           loadConsumed();
+
+            Toast.makeText(this,
+                    "Import OK",
+                    Toast.LENGTH_LONG).show();
+
+        } catch (Exception e) {
+
+            Toast.makeText(this,
+                    "Błąd import: " + e.getMessage(),
+                    Toast.LENGTH_LONG).show();
+        }
     }
 }

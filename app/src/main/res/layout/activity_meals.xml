@@ -21,6 +21,20 @@
             android:textStyle="bold"
             android:paddingBottom="16dp" />
 
+
+        <Button
+            android:id="@+id/exportConsumedButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Eksport spożytych"
+            android:layout_marginTop="10dp"/>
+
+        <Button
+            android:id="@+id/importConsumedButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Import spożytych"
+            android:layout_marginBottom="10dp"/>
         <!-- ===================== -->
         <!-- SELECT PRODUCT -->
         <!-- ===================== -->

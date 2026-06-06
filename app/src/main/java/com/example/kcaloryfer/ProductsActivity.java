@@ -16,6 +16,13 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.example.kcaloryfer.data.AppDatabase;
 import com.example.kcaloryfer.data.Product;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.util.List;
 
 public class ProductsActivity extends AppCompatActivity {
@@ -35,6 +42,12 @@ public class ProductsActivity extends AppCompatActivity {
         addProductButton = findViewById(R.id.addProductButton);
 
         addProductButton.setOnClickListener(v -> showAddDialog());
+
+        Button exportButton = findViewById(R.id.exportButton);
+        Button importButton = findViewById(R.id.importButton);
+
+        exportButton.setOnClickListener(v -> exportProducts());
+        importButton.setOnClickListener(v -> importProducts());
 
         loadProducts();
     }
@@ -190,6 +203,120 @@ public class ProductsActivity extends AppCompatActivity {
                 })
                 .setNegativeButton("Anuluj", null)
                 .show();
+    }
+
+
+
+    private void exportProducts() {
+
+        try {
+
+            JSONArray array = new JSONArray();
+
+            List<Product> products = db.productDao().getAll();
+
+            for (Product p : products) {
+
+                JSONObject obj = new JSONObject();
+
+                obj.put("name", p.name);
+                obj.put("grams", p.grams);
+                obj.put("protein", p.protein);
+                obj.put("carbs", p.carbs);
+                obj.put("fat", p.fat);
+                obj.put("kcal", p.kcal);
+
+                array.put(obj);
+            }
+
+            File file = new File(
+                    getFilesDir(),
+                    "products_backup.json"
+            );
+
+            FileWriter writer = new FileWriter(file);
+
+            writer.write(array.toString(2));
+
+            writer.close();
+
+            Toast.makeText(
+                    this,
+                    "Zapisano:\n" + file.getAbsolutePath(),
+                    Toast.LENGTH_LONG
+            ).show();
+
+        } catch (Exception e) {
+
+            Toast.makeText(
+                    this,
+                    e.getMessage(),
+                    Toast.LENGTH_LONG
+            ).show();
+        }
+    }
+
+
+    private void importProducts() {
+
+        try {
+
+            File file = new File(
+                    getFilesDir(),
+                    "products_backup.json"
+            );
+
+            BufferedReader br =
+                    new BufferedReader(new FileReader(file));
+
+            StringBuilder json = new StringBuilder();
+
+            String line;
+
+            while ((line = br.readLine()) != null) {
+                json.append(line);
+            }
+
+            br.close();
+
+            JSONArray array =
+                    new JSONArray(json.toString());
+
+            db.productDao().deleteAll();
+
+            for (int i = 0; i < array.length(); i++) {
+
+                JSONObject obj =
+                        array.getJSONObject(i);
+
+                Product p = new Product();
+
+                p.name = obj.getString("name");
+                p.grams = obj.getDouble("grams");
+                p.protein = obj.getDouble("protein");
+                p.carbs = obj.getDouble("carbs");
+                p.fat = obj.getDouble("fat");
+                p.kcal = obj.getDouble("kcal");
+
+                db.productDao().insert(p);
+            }
+
+            loadProducts();
+
+            Toast.makeText(
+                    this,
+                    "Import zakończony",
+                    Toast.LENGTH_LONG
+            ).show();
+
+        } catch (Exception e) {
+
+            Toast.makeText(
+                    this,
+                    e.getMessage(),
+                    Toast.LENGTH_LONG
+            ).show();
+        }
     }
 
 

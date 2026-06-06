@@ -79,12 +79,20 @@ public class MainActivity extends AppCompatActivity {
             fat += p.fat;
         }
 
+//        todaySummaryText.setText(
+//                "Dziś:\n" +
+//                        "kcal: " + kcal + "\n" +
+//                        "B: " + protein + " g\n" +
+//                        "W: " + carbs + " g\n" +
+//                        "T: " + fat + " g"
+//        );
+
         todaySummaryText.setText(
                 "Dziś:\n" +
-                        "kcal: " + kcal + "\n" +
-                        "B: " + protein + " g\n" +
-                        "W: " + carbs + " g\n" +
-                        "T: " + fat + " g"
+                        "kcal: " + String.format(Locale.US, "%.1f", kcal) + "\n" +
+                        "B: " + String.format(Locale.US, "%.1f", protein) + " g\n" +
+                        "W: " + String.format(Locale.US, "%.1f", carbs) + " g\n" +
+                        "T: " + String.format(Locale.US, "%.1f", fat) + " g"
         );
     }
 
