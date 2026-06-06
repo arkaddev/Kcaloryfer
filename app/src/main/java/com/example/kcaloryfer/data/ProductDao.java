@@ -15,15 +15,15 @@ public interface ProductDao {
     @Insert
     void insert(Product product);
 
-    @Query("SELECT * FROM Product")
+    @Query("SELECT * FROM products")
     List<Product> getAll();
 
-    @Query("DELETE FROM Product WHERE id = :id")
+    @Query("DELETE FROM products WHERE id = :id")
     void deleteById(int id);
 
     @Update
     void update(Product product);
 
-    @Query("DELETE FROM Product")
+    @Query("DELETE FROM products")
     void deleteAll();
 }

@@ -20,7 +20,6 @@ import java.util.*;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
-import java.io.FileWriter;
 import java.util.List;
 
 public class MealsActivity extends AppCompatActivity {
@@ -53,16 +52,16 @@ public class MealsActivity extends AppCompatActivity {
         productSpinner = findViewById(R.id.productSpinner);
         selectedInfo = findViewById(R.id.selectedInfo);
         addButton = findViewById(R.id.addButton);
-        consumedContainer = findViewById(R.id.consumedContainer);
+        consumedContainer = findViewById(R.id.mealsContainer);
 
-        Button exportMealsButton = findViewById(R.id.exportConsumedButton);
-        Button importMealsButton = findViewById(R.id.importConsumedButton);
+        Button exportMealsButton = findViewById(R.id.exportMealsButton);
+        Button importMealsButton = findViewById(R.id.importMealsButton);
 
         exportMealsButton.setOnClickListener(v -> exportMeals());
         importMealsButton.setOnClickListener(v -> importMeals());
 
         loadProducts();
-        loadConsumed();
+        loadMeals();
 
         addButton.setOnClickListener(v -> addProduct());
     }
@@ -119,7 +118,7 @@ public class MealsActivity extends AppCompatActivity {
                 Locale.getDefault()
         ).format(new Date());
 
-        ConsumedProduct c = new ConsumedProduct();
+        Meal c = new Meal();
 
         c.name = selectedProduct.name;
         c.grams = selectedProduct.grams;
@@ -129,15 +128,15 @@ public class MealsActivity extends AppCompatActivity {
         c.kcal = selectedProduct.kcal;
         c.date = date;
 
-        db.consumedProductDao().insert(c);
+        db.MealDao().insert(c);
 
-        loadConsumed();
+        loadMeals();
     }
 
     // -------------------------
     // SHOW CONSUMED
     // -------------------------
-    private void loadConsumed() {
+    private void loadMeals() {
 
         consumedContainer.removeAllViews();
 
@@ -146,10 +145,10 @@ public class MealsActivity extends AppCompatActivity {
                 Locale.getDefault()
         ).format(new Date());
 
-        List<ConsumedProduct> list =
-                db.consumedProductDao().getByDate(today);
+        List<Meal> list =
+                db.MealDao().getByDate(today);
 
-        for (ConsumedProduct c : list) {
+        for (Meal c : list) {
 
             LinearLayout row = new LinearLayout(this);
             row.setOrientation(LinearLayout.HORIZONTAL);
@@ -165,8 +164,8 @@ public class MealsActivity extends AppCompatActivity {
             del.setImageResource(android.R.drawable.ic_delete);
 
             del.setOnClickListener(v -> {
-                db.consumedProductDao().deleteById(c.id);
-                loadConsumed();
+                db.MealDao().deleteById(c.id);
+                loadMeals();
             });
 
             // ---------------- EDIT
@@ -186,7 +185,7 @@ public class MealsActivity extends AppCompatActivity {
     // -------------------------
     // EDIT
     // -------------------------
-    private void showEditDialog(ConsumedProduct c) {
+    private void showEditDialog(Meal c) {
 
         AlertDialog.Builder b = new AlertDialog.Builder(this);
         b.setTitle("Edytuj kcal");
@@ -201,9 +200,9 @@ public class MealsActivity extends AppCompatActivity {
 
             try {
                 c.kcal = Double.parseDouble(input.getText().toString());
-                db.consumedProductDao().insert(c); // lub update jeśli masz
+                db.MealDao().insert(c); // lub update jeśli masz
 
-                loadConsumed();
+                loadMeals();
             } catch (Exception ignored) {}
         });
 
@@ -217,9 +216,9 @@ public class MealsActivity extends AppCompatActivity {
 
             JSONArray array = new JSONArray();
 
-            List<ConsumedProduct> meals = db.consumedProductDao().getAll();
+            List<Meal> meals = db.MealDao().getAll();
 
-            for (ConsumedProduct m : meals) {
+            for (Meal m : meals) {
 
                 JSONObject obj = new JSONObject();
 
@@ -272,13 +271,13 @@ public class MealsActivity extends AppCompatActivity {
 
             JSONArray array = new JSONArray(json.toString());
 
-            db.consumedProductDao().deleteAll();
+            db.MealDao().deleteAll();
 
             for (int i = 0; i < array.length(); i++) {
 
                 JSONObject obj = array.getJSONObject(i);
 
-                ConsumedProduct m = new ConsumedProduct();
+                Meal m = new Meal();
 
                 m.name = obj.getString("name");
                 m.grams = obj.getDouble("grams");
@@ -291,10 +290,10 @@ public class MealsActivity extends AppCompatActivity {
                     m.date = obj.getString("date");
                 }
 
-                db.consumedProductDao().insert(m);
+                db.MealDao().insert(m);
             }
 
-           loadConsumed();
+           loadMeals();
 
             Toast.makeText(this,
                     "Import OK",

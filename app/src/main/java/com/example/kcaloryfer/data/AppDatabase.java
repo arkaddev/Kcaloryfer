@@ -9,9 +9,9 @@ import androidx.room.RoomDatabase;
 @Database(
         entities = {
                 Product.class,
-                ConsumedProduct.class
+                Meal.class
         },
-        version = 3,
+        version = 4,
         exportSchema = false
 )
 public abstract class AppDatabase extends RoomDatabase {
@@ -19,7 +19,7 @@ public abstract class AppDatabase extends RoomDatabase {
     private static AppDatabase instance;
 
     public abstract ProductDao productDao();
-    public abstract ConsumedProductDao consumedProductDao();
+    public abstract MealDao MealDao();
 
     public static AppDatabase getInstance(Context context) {
         if (instance == null) {

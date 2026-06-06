@@ -3,7 +3,7 @@ package com.example.kcaloryfer.data;
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
 
-@Entity
+@Entity(tableName = "products")
 public class Product {
 
     @PrimaryKey(autoGenerate = true)

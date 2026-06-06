@@ -2,14 +2,13 @@ package com.example.kcaloryfer;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
 import android.widget.Button;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.kcaloryfer.data.AppDatabase;
-import com.example.kcaloryfer.data.ConsumedProduct;
+import com.example.kcaloryfer.data.Meal;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -63,8 +62,8 @@ public class MainActivity extends AppCompatActivity {
         ).format(new Date());
 
 
-        List<ConsumedProduct> list =
-                db.consumedProductDao().getByDate(today);
+        List<Meal> list =
+                db.MealDao().getByDate(today);
 
 
         double kcal = 0;
@@ -72,7 +71,7 @@ public class MainActivity extends AppCompatActivity {
         double carbs = 0;
         double fat = 0;
 
-        for (ConsumedProduct p : list) {
+        for (Meal p : list) {
             kcal += p.kcal;
             protein += p.protein;
             carbs += p.carbs;
@@ -124,8 +123,8 @@ public class MainActivity extends AppCompatActivity {
                 Locale.US
         ).format(calendar.getTime());
 
-        List<ConsumedProduct> weekList =
-                db.consumedProductDao().getBetweenDates(
+        List<Meal> weekList =
+                db.MealDao().getBetweenDates(
                         weekStart,
                         weekEnd
                 );
@@ -137,7 +136,7 @@ public class MainActivity extends AppCompatActivity {
 
         Set<String> activeDays = new HashSet<>();
 
-        for (ConsumedProduct p : weekList) {
+        for (Meal p : weekList) {
             kcal += p.kcal;
             protein += p.protein;
             carbs += p.carbs;
