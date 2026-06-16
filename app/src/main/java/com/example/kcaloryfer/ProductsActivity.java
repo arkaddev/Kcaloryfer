@@ -3,12 +3,7 @@ package com.example.kcaloryfer;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.text.InputType;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.ImageButton;
-import android.widget.LinearLayout;
-import android.widget.TextView;
-import android.widget.Toast;
+import android.widget.*;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -34,7 +29,7 @@ public class ProductsActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_products); // możesz zmienić na activity_products
+        setContentView(R.layout.activity_products);
 
         db = AppDatabase.getInstance(this);
 
@@ -43,16 +38,23 @@ public class ProductsActivity extends AppCompatActivity {
 
         addProductButton.setOnClickListener(v -> showAddDialog());
 
-        Button exportButton = findViewById(R.id.exportButton);
-        Button importButton = findViewById(R.id.importButton);
+        findViewById(R.id.exportButton).setOnClickListener(v -> exportProducts());
+        findViewById(R.id.importButton).setOnClickListener(v -> {
 
-        exportButton.setOnClickListener(v -> exportProducts());
-        importButton.setOnClickListener(v -> importProducts());
+            new AlertDialog.Builder(this)
+                    .setTitle("Import produktów")
+                    .setMessage("Import usunie wszystkie aktualne produkty i zastąpi je backupem. Kontynuować?")
+                    .setPositiveButton("Tak", (d, w) -> importProducts())
+                    .setNegativeButton("Anuluj", null)
+                    .show();
 
+        });
         loadProducts();
     }
 
-
+    // =========================
+    // LOAD PRODUCTS
+    // =========================
     private void loadProducts() {
 
         container.removeAllViews();
@@ -69,9 +71,19 @@ public class ProductsActivity extends AppCompatActivity {
             textLayout.setOrientation(LinearLayout.VERTICAL);
 
             TextView main = new TextView(this);
-            main.setText(p.name + " | " + p.grams + "g | kcal: " + p.kcal);
+            main.setText(
+                    p.name +
+                            " | kcal: " + p.kcal
+            );
             main.setTextSize(14);
             main.setTypeface(null, Typeface.BOLD);
+
+            TextView main2 = new TextView(this);
+            main2.setText(
+                  p.servingLabel +
+                            " (" + p.servingGrams + "g)"
+            );
+            main2.setTextSize(12);
 
 
             TextView sub = new TextView(this);
@@ -79,19 +91,18 @@ public class ProductsActivity extends AppCompatActivity {
             sub.setTextSize(12);
 
             textLayout.addView(main);
+            textLayout.addView(main2);
             textLayout.addView(sub);
 
             Button edit = new Button(this);
             edit.setText("Edit");
             edit.setTextSize(10);
 
-
             edit.setOnClickListener(v -> showEditDialog(p));
 
             ImageButton delete = new ImageButton(this);
             delete.setImageResource(android.R.drawable.ic_delete);
             delete.setBackgroundColor(android.graphics.Color.TRANSPARENT);
-            delete.setPadding(5, 2, 5, 2);
 
             delete.setOnClickListener(v ->
                     new AlertDialog.Builder(this)
@@ -112,7 +123,9 @@ public class ProductsActivity extends AppCompatActivity {
         }
     }
 
-
+    // =========================
+    // ADD PRODUCT
+    // =========================
     private void showAddDialog() {
 
         LinearLayout layout = new LinearLayout(this);
@@ -123,7 +136,7 @@ public class ProductsActivity extends AppCompatActivity {
         name.setHint("Nazwa");
 
         EditText grams = new EditText(this);
-        grams.setHint("Gramy");
+        grams.setHint("Gramy (bazowo)");
         grams.setInputType(InputType.TYPE_NUMBER_FLAG_DECIMAL);
 
         EditText protein = new EditText(this);
@@ -142,12 +155,21 @@ public class ProductsActivity extends AppCompatActivity {
         kcal.setHint("Kcal");
         kcal.setInputType(InputType.TYPE_NUMBER_FLAG_DECIMAL);
 
+        EditText servingGrams = new EditText(this);
+        servingGrams.setHint("Gramatura porcji (np. 150)");
+        servingGrams.setInputType(InputType.TYPE_NUMBER_FLAG_DECIMAL);
+
+        EditText servingLabel = new EditText(this);
+        servingLabel.setHint("Opis porcji (np. 1 porcja)");
+
         layout.addView(name);
         layout.addView(grams);
         layout.addView(protein);
         layout.addView(carbs);
         layout.addView(fat);
         layout.addView(kcal);
+        layout.addView(servingGrams);
+        layout.addView(servingLabel);
 
         new AlertDialog.Builder(this)
                 .setTitle("Nowy produkt")
@@ -155,6 +177,7 @@ public class ProductsActivity extends AppCompatActivity {
                 .setPositiveButton("Dodaj", (d, w) -> {
 
                     Product p = new Product();
+
                     p.name = name.getText().toString();
                     p.grams = parse(grams);
                     p.protein = parse(protein);
@@ -162,9 +185,10 @@ public class ProductsActivity extends AppCompatActivity {
                     p.fat = parse(fat);
                     p.kcal = parse(kcal);
 
-                    db.productDao().insert(p);
+                    p.servingGrams = parse(servingGrams);
+                    p.servingLabel = servingLabel.getText().toString();
 
-                    Toast.makeText(this, "Dodano", Toast.LENGTH_SHORT).show();
+                    db.productDao().insert(p);
 
                     loadProducts();
                 })
@@ -172,7 +196,9 @@ public class ProductsActivity extends AppCompatActivity {
                 .show();
     }
 
-
+    // =========================
+    // EDIT PRODUCT
+    // =========================
     private void showEditDialog(Product p) {
 
         LinearLayout layout = new LinearLayout(this);
@@ -182,12 +208,35 @@ public class ProductsActivity extends AppCompatActivity {
         EditText name = new EditText(this);
         name.setText(p.name);
 
+        EditText grams = new EditText(this);
+        grams.setText(String.valueOf(p.grams));
+
+        EditText protein = new EditText(this);
+        protein.setText(String.valueOf(p.protein));
+
+        EditText carbs = new EditText(this);
+        carbs.setText(String.valueOf(p.carbs));
+
+        EditText fat = new EditText(this);
+        fat.setText(String.valueOf(p.fat));
+
         EditText kcal = new EditText(this);
-        kcal.setInputType(InputType.TYPE_NUMBER_FLAG_DECIMAL);
         kcal.setText(String.valueOf(p.kcal));
 
+        EditText servingGrams = new EditText(this);
+        servingGrams.setText(String.valueOf(p.servingGrams));
+
+        EditText servingLabel = new EditText(this);
+        servingLabel.setText(p.servingLabel);
+
         layout.addView(name);
+        layout.addView(grams);
+        layout.addView(protein);
+        layout.addView(carbs);
+        layout.addView(fat);
         layout.addView(kcal);
+        layout.addView(servingGrams);
+        layout.addView(servingLabel);
 
         new AlertDialog.Builder(this)
                 .setTitle("Edytuj produkt")
@@ -195,7 +244,14 @@ public class ProductsActivity extends AppCompatActivity {
                 .setPositiveButton("Zapisz", (d, w) -> {
 
                     p.name = name.getText().toString();
+                    p.grams = parse(grams);
+                    p.protein = parse(protein);
+                    p.carbs = parse(carbs);
+                    p.fat = parse(fat);
                     p.kcal = parse(kcal);
+
+                    p.servingGrams = parse(servingGrams);
+                    p.servingLabel = servingLabel.getText().toString();
 
                     db.productDao().update(p);
 
@@ -205,8 +261,9 @@ public class ProductsActivity extends AppCompatActivity {
                 .show();
     }
 
-
-
+    // =========================
+    // EXPORT / IMPORT
+    // =========================
     private void exportProducts() {
 
         try {
@@ -226,51 +283,39 @@ public class ProductsActivity extends AppCompatActivity {
                 obj.put("fat", p.fat);
                 obj.put("kcal", p.kcal);
 
+                obj.put("servingGrams", p.servingGrams);
+                obj.put("servingLabel", p.servingLabel);
+
                 array.put(obj);
             }
 
-            File file = new File(
-                    getFilesDir(),
-                    "products_backup.json"
-            );
-
+            File file = new File(getFilesDir(), "products_backup.json");
             FileWriter writer = new FileWriter(file);
-
             writer.write(array.toString(2));
-
             writer.close();
 
-            Toast.makeText(
-                    this,
-                    "Zapisano:\n" + file.getAbsolutePath(),
+            Toast.makeText(this,
+                    "Eksport zakończony pomyślnie",
                     Toast.LENGTH_LONG
             ).show();
 
         } catch (Exception e) {
 
-            Toast.makeText(
-                    this,
-                    e.getMessage(),
+            Toast.makeText(this,
+                    "Błąd eksportu: " + e.getMessage(),
                     Toast.LENGTH_LONG
             ).show();
         }
     }
-
-
     private void importProducts() {
 
         try {
 
-            File file = new File(
-                    getFilesDir(),
-                    "products_backup.json"
-            );
+            File file = new File(getFilesDir(), "products_backup.json");
 
-            BufferedReader br =
-                    new BufferedReader(new FileReader(file));
+            BufferedReader br = new BufferedReader(new FileReader(file));
 
             StringBuilder json = new StringBuilder();
-
             String line;
 
             while ((line = br.readLine()) != null) {
@@ -279,15 +324,13 @@ public class ProductsActivity extends AppCompatActivity {
 
             br.close();
 
-            JSONArray array =
-                    new JSONArray(json.toString());
+            JSONArray array = new JSONArray(json.toString());
 
             db.productDao().deleteAll();
 
             for (int i = 0; i < array.length(); i++) {
 
-                JSONObject obj =
-                        array.getJSONObject(i);
+                JSONObject obj = array.getJSONObject(i);
 
                 Product p = new Product();
 
@@ -298,27 +341,16 @@ public class ProductsActivity extends AppCompatActivity {
                 p.fat = obj.getDouble("fat");
                 p.kcal = obj.getDouble("kcal");
 
+                p.servingGrams = obj.optDouble("servingGrams", 100);
+                p.servingLabel = obj.optString("servingLabel", "1 porcja");
+
                 db.productDao().insert(p);
             }
 
             loadProducts();
 
-            Toast.makeText(
-                    this,
-                    "Import zakończony",
-                    Toast.LENGTH_LONG
-            ).show();
-
-        } catch (Exception e) {
-
-            Toast.makeText(
-                    this,
-                    e.getMessage(),
-                    Toast.LENGTH_LONG
-            ).show();
-        }
+        } catch (Exception ignored) {}
     }
-
 
     private double parse(EditText e) {
         String s = e.getText().toString();

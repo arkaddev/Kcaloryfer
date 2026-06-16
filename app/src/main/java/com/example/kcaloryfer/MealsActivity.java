@@ -13,14 +13,11 @@ import com.example.kcaloryfer.data.*;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.io.FileWriter;
-import java.text.SimpleDateFormat;
-import java.util.*;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
-import java.util.List;
+import java.io.FileWriter;
+import java.util.*;
 
 public class MealsActivity extends AppCompatActivity {
 
@@ -58,7 +55,16 @@ public class MealsActivity extends AppCompatActivity {
         Button importMealsButton = findViewById(R.id.importMealsButton);
 
         exportMealsButton.setOnClickListener(v -> exportMeals());
-        importMealsButton.setOnClickListener(v -> importMeals());
+        importMealsButton.setOnClickListener(v -> {
+
+            new AlertDialog.Builder(this)
+                    .setTitle("Import danych")
+                    .setMessage("UWAGA: Import usunie wszystkie obecne posiłki i zastąpi je danymi z backupu. Czy na pewno chcesz kontynuować?")
+                    .setPositiveButton("Tak, importuj", (dialog, which) -> importMeals())
+                    .setNegativeButton("Anuluj", null)
+                    .show();
+
+        });
 
         loadProducts();
         loadMeals();
@@ -66,12 +72,16 @@ public class MealsActivity extends AppCompatActivity {
         addButton.setOnClickListener(v -> addProduct());
     }
 
-    // -------------------------
+    // =========================
     // PRODUCTS
-    // -------------------------
+    // =========================
     private void loadProducts() {
 
         productList = db.productDao().getAll();
+
+        Collections.sort(productList, (a, b) ->
+                a.name.compareToIgnoreCase(b.name)
+        );
 
         List<String> names = new ArrayList<>();
 
@@ -89,7 +99,6 @@ public class MealsActivity extends AppCompatActivity {
         productSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, android.view.View view, int position, long id) {
-
                 selectedProduct = productList.get(position);
 
                 selectedInfo.setText(
@@ -97,7 +106,9 @@ public class MealsActivity extends AppCompatActivity {
                                 "\nKcal: " + selectedProduct.kcal +
                                 "\nB: " + selectedProduct.protein +
                                 " W: " + selectedProduct.carbs +
-                                " T: " + selectedProduct.fat
+                                " T: " + selectedProduct.fat +
+                                "\nPorcja: " + selectedProduct.servingLabel +
+                                " (" + selectedProduct.servingGrams + " g)"
                 );
             }
 
@@ -106,23 +117,26 @@ public class MealsActivity extends AppCompatActivity {
         });
     }
 
-    // -------------------------
-    // ADD CONSUMED
-    // -------------------------
+    // =========================
+    // ADD MEAL (GRAMY / PORCJE)
+    // =========================
     private void addProduct() {
+
         if (selectedProduct == null) return;
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle(selectedProduct.name);
 
+        // INFO
         TextView info = new TextView(this);
         info.setText(
-                "Podaj ilość w gramach\n\n" +
-                        "1 porcja = " + selectedProduct.grams + " g\n" +
-                        selectedProduct.kcal + " kcal / porcja"
+                "Porcja: " + selectedProduct.servingLabel + "\n" +
+                        selectedProduct.servingGrams + " g\n" +
+                        "Kcal / 100g: " + selectedProduct.kcal
         );
         info.setPadding(40, 20, 40, 20);
 
+        // INPUT
         EditText input = new EditText(this);
         input.setHint("np. 150");
         input.setInputType(
@@ -130,25 +144,59 @@ public class MealsActivity extends AppCompatActivity {
                         InputType.TYPE_NUMBER_FLAG_DECIMAL
         );
 
+        // =========================
+        // RADIO BUTTONS
+        // =========================
+        RadioGroup group = new RadioGroup(this);
+        group.setOrientation(RadioGroup.HORIZONTAL);
+
+        RadioButton rbGrams = new RadioButton(this);
+        rbGrams.setText("Gramy");
+        rbGrams.setId(100);
+        rbGrams.setChecked(true);
+
+        RadioButton rbPortions = new RadioButton(this);
+        rbPortions.setText("Porcje");
+        rbPortions.setId(200);
+
+        group.addView(rbGrams);
+        group.addView(rbPortions);
+
+        // LAYOUT
         LinearLayout layout = new LinearLayout(this);
         layout.setOrientation(LinearLayout.VERTICAL);
         layout.setPadding(40, 20, 40, 10);
+
         layout.addView(info);
+        layout.addView(group);
         layout.addView(input);
 
         builder.setView(layout);
 
+        // =========================
+        // SAVE
+        // =========================
         builder.setPositiveButton("Dodaj", (dialog, which) -> {
 
             try {
-                double grams = Double.parseDouble(input.getText().toString());
+                double value = Double.parseDouble(input.getText().toString());
 
-                double ratio = grams / selectedProduct.grams;
+                double grams;
 
-                String date = new SimpleDateFormat(
+                int selectedId = group.getCheckedRadioButtonId();
+
+                if (selectedId == rbGrams.getId()) {
+                    grams = value;
+                } else {
+                    grams = value * selectedProduct.servingGrams;
+                }
+
+                double ratio = grams / 100.0;
+
+                String date = new java.text.SimpleDateFormat(
                         "yyyy-MM-dd",
-                        Locale.getDefault()
-                ).format(new Date());
+                        java.util.Locale.getDefault()
+                ).format(new java.util.Date());
 
                 Meal m = new Meal();
                 m.name = selectedProduct.name;
@@ -158,7 +206,6 @@ public class MealsActivity extends AppCompatActivity {
                 m.protein = selectedProduct.protein * ratio;
                 m.carbs = selectedProduct.carbs * ratio;
                 m.fat = selectedProduct.fat * ratio;
-
                 m.date = date;
 
                 db.MealDao().insert(m);
@@ -166,7 +213,7 @@ public class MealsActivity extends AppCompatActivity {
                 loadMeals();
 
             } catch (Exception e) {
-                Toast.makeText(this, "Błędna ilość gramów", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Błędna wartość", Toast.LENGTH_SHORT).show();
             }
         });
 
@@ -174,20 +221,19 @@ public class MealsActivity extends AppCompatActivity {
         builder.show();
     }
 
-    // -------------------------
-    // SHOW CONSUMED
-    // -------------------------
+    // =========================
+    // SHOW MEALS
+    // =========================
     private void loadMeals() {
 
         consumedContainer.removeAllViews();
 
-        String today = new SimpleDateFormat(
+        String today = new java.text.SimpleDateFormat(
                 "yyyy-MM-dd",
-                Locale.getDefault()
-        ).format(new Date());
+                java.util.Locale.getDefault()
+        ).format(new java.util.Date());
 
-        List<Meal> list =
-                db.MealDao().getByDate(today);
+        List<Meal> list = db.MealDao().getByDate(today);
 
         for (Meal c : list) {
 
@@ -197,24 +243,21 @@ public class MealsActivity extends AppCompatActivity {
             TextView tv = new TextView(this);
             tv.setText(c.name + " | " + c.kcal + " kcal");
             tv.setPadding(20, 20, 20, 20);
-            tv.setLayoutParams(new LinearLayout.LayoutParams(0,
-                    LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+            tv.setLayoutParams(new LinearLayout.LayoutParams(
+                    0,
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    1f
+            ));
 
-            // ---------------- DELETE
             ImageButton del = new ImageButton(this);
-
-            
             del.setImageResource(android.R.drawable.ic_delete);
-
             del.setOnClickListener(v -> {
                 db.MealDao().deleteById(c.id);
                 loadMeals();
             });
 
-            // ---------------- EDIT
             Button edit = new Button(this);
             edit.setText("Edit");
-
             edit.setOnClickListener(v -> showEditDialog(c));
 
             row.addView(tv);
@@ -225,9 +268,9 @@ public class MealsActivity extends AppCompatActivity {
         }
     }
 
-    // -------------------------
+    // =========================
     // EDIT
-    // -------------------------
+    // =========================
     private void showEditDialog(Meal c) {
 
         AlertDialog.Builder b = new AlertDialog.Builder(this);
@@ -240,11 +283,9 @@ public class MealsActivity extends AppCompatActivity {
         b.setView(input);
 
         b.setPositiveButton("Zapisz", (d, w) -> {
-
             try {
                 c.kcal = Double.parseDouble(input.getText().toString());
-                db.MealDao().insert(c); // lub update jeśli masz
-
+                db.MealDao().insert(c);
                 loadMeals();
             } catch (Exception ignored) {}
         });
@@ -253,26 +294,24 @@ public class MealsActivity extends AppCompatActivity {
         b.show();
     }
 
+    // =========================
+    // EXPORT
+    // =========================
     private void exportMeals() {
 
         try {
-
             JSONArray array = new JSONArray();
-
             List<Meal> meals = db.MealDao().getAll();
 
             for (Meal m : meals) {
-
                 JSONObject obj = new JSONObject();
-
                 obj.put("name", m.name);
                 obj.put("grams", m.grams);
                 obj.put("protein", m.protein);
                 obj.put("carbs", m.carbs);
                 obj.put("fat", m.fat);
                 obj.put("kcal", m.kcal);
-                obj.put("date", m.date); // jeśli masz datę
-
+                obj.put("date", m.date);
                 array.put(obj);
             }
 
@@ -287,17 +326,18 @@ public class MealsActivity extends AppCompatActivity {
                     Toast.LENGTH_LONG).show();
 
         } catch (Exception e) {
-
             Toast.makeText(this,
                     "Błąd export: " + e.getMessage(),
                     Toast.LENGTH_LONG).show();
         }
     }
 
+    // =========================
+    // IMPORT
+    // =========================
     private void importMeals() {
 
         try {
-
             File file = new File(getFilesDir(), "meals_backup.json");
 
             BufferedReader br =
@@ -321,7 +361,6 @@ public class MealsActivity extends AppCompatActivity {
                 JSONObject obj = array.getJSONObject(i);
 
                 Meal m = new Meal();
-
                 m.name = obj.getString("name");
                 m.grams = obj.getDouble("grams");
                 m.protein = obj.getDouble("protein");
@@ -336,14 +375,11 @@ public class MealsActivity extends AppCompatActivity {
                 db.MealDao().insert(m);
             }
 
-           loadMeals();
+            loadMeals();
 
-            Toast.makeText(this,
-                    "Import OK",
-                    Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "Import OK", Toast.LENGTH_LONG).show();
 
         } catch (Exception e) {
-
             Toast.makeText(this,
                     "Błąd import: " + e.getMessage(),
                     Toast.LENGTH_LONG).show();

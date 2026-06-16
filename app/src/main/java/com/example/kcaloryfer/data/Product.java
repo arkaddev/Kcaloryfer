@@ -15,4 +15,7 @@ public class Product {
     public double carbs;
     public double fat;
     public double kcal;
+
+    public double servingGrams;
+    public String servingLabel;
 }
