@@ -110,27 +110,68 @@ public class MealsActivity extends AppCompatActivity {
     // ADD CONSUMED
     // -------------------------
     private void addProduct() {
-
         if (selectedProduct == null) return;
 
-        String date = new SimpleDateFormat(
-                "yyyy-MM-dd",
-                Locale.getDefault()
-        ).format(new Date());
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle(selectedProduct.name);
 
-        Meal c = new Meal();
+        TextView info = new TextView(this);
+        info.setText(
+                "Podaj ilość w gramach\n\n" +
+                        "1 porcja = " + selectedProduct.grams + " g\n" +
+                        selectedProduct.kcal + " kcal / porcja"
+        );
+        info.setPadding(40, 20, 40, 20);
 
-        c.name = selectedProduct.name;
-        c.grams = selectedProduct.grams;
-        c.protein = selectedProduct.protein;
-        c.carbs = selectedProduct.carbs;
-        c.fat = selectedProduct.fat;
-        c.kcal = selectedProduct.kcal;
-        c.date = date;
+        EditText input = new EditText(this);
+        input.setHint("np. 150");
+        input.setInputType(
+                InputType.TYPE_CLASS_NUMBER |
+                        InputType.TYPE_NUMBER_FLAG_DECIMAL
+        );
 
-        db.MealDao().insert(c);
+        LinearLayout layout = new LinearLayout(this);
+        layout.setOrientation(LinearLayout.VERTICAL);
+        layout.setPadding(40, 20, 40, 10);
+        layout.addView(info);
+        layout.addView(input);
 
-        loadMeals();
+        builder.setView(layout);
+
+        builder.setPositiveButton("Dodaj", (dialog, which) -> {
+
+            try {
+                double grams = Double.parseDouble(input.getText().toString());
+
+                double ratio = grams / selectedProduct.grams;
+
+                String date = new SimpleDateFormat(
+                        "yyyy-MM-dd",
+                        Locale.getDefault()
+                ).format(new Date());
+
+                Meal m = new Meal();
+                m.name = selectedProduct.name;
+                m.grams = grams;
+
+                m.kcal = selectedProduct.kcal * ratio;
+                m.protein = selectedProduct.protein * ratio;
+                m.carbs = selectedProduct.carbs * ratio;
+                m.fat = selectedProduct.fat * ratio;
+
+                m.date = date;
+
+                db.MealDao().insert(m);
+
+                loadMeals();
+
+            } catch (Exception e) {
+                Toast.makeText(this, "Błędna ilość gramów", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        builder.setNegativeButton("Anuluj", null);
+        builder.show();
     }
 
     // -------------------------
@@ -161,6 +202,8 @@ public class MealsActivity extends AppCompatActivity {
 
             // ---------------- DELETE
             ImageButton del = new ImageButton(this);
+
+            
             del.setImageResource(android.R.drawable.ic_delete);
 
             del.setOnClickListener(v -> {
